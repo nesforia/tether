@@ -1,0 +1,14 @@
+﻿config/Secrets.cs
+bin/
+obj/
+*.dll
+*.pdb
+packages/
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.DS_Store
+Thumbs.db

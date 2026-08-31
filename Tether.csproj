@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+  <PropertyGroup>
+    <Name>Tether</Name>
+    <Author>nesphy</Author>
+    <Description>Create a temporary chats for you and your friends, that are working inside a duty or locked instances. Add how many people u want, and manage it from there!</Description>
+    <Punchline>Temporary groups for locked instances!</Punchline>
+    <Version>1.0.0.0</Version>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="README.md" />
+    <Content Include="tether.json" />
+    <PackageReference Include="ECommons" Version="3.2.1.17" />
+    <PackageReference Update="DotNet.ReproducibleBuilds" Version="2.0.5" />
+    <PackageReference Include="SocketIOClient" Version="4.0.5" />
+    <Content Include=".gitignore" />
+
+    <Content Include="images\icon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>
