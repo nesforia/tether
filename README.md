@@ -14,4 +14,4 @@ If they have the same plugin, they gonna get a request from you.\
 Accepting it gonna create a chat! If you have chat, you can invite people to the chat in the same way.
 
 ## Development
-You need [Tether Backend Service](https://github.com/nesforia/tether-api) to properly set up development environment. Copy `./config/Secrets.example.cs` rename it to `Secrets.cs` and configure `URL` to match with TBS.
+You need [Tether Backend Service](https://github.com/nesforia/tether-api) to properly set up development environment. Configure `Secrets.cs` to match with TBS.

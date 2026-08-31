@@ -1,5 +1,4 @@
-﻿config/Secrets.cs
-bin/
+﻿bin/
 obj/
 *.dll
 *.pdb
