@@ -4,7 +4,7 @@ A Dalamud plugin to provide a temporary chats into game.\
 It allows you to create chat with users and talk to them in locked instances!
 
 ## Installation
-1. Go to Experimental Tab in Dalamud Settings (`/xlplugins`), and put `https://raw.githubusercontent.com/nesforia/tether/refs/heads/master/tether.json` into Custom Plugin Repositories tab.
+1. Go to Experimental Tab in Dalamud Settings (`/xlplugins`), and put `https://raw.githubusercontent.com/nesforia/tether/refs/heads/master/repo.json` into Custom Plugin Repositories tab.
 2. Save it, and in `/xlplugins` look for `Tether`
 3. Install it.
 

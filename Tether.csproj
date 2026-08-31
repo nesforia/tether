@@ -11,13 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="README.md" />
-    <Content Include="tether.json" />
     <PackageReference Include="ECommons" Version="3.2.1.17" />
     <PackageReference Update="DotNet.ReproducibleBuilds" Version="2.0.5" />
     <PackageReference Include="SocketIOClient" Version="4.0.5" />
-    <Content Include=".gitignore" />
-
     <Content Include="images\icon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
