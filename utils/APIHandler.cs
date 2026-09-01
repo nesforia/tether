@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Dalamud.Interface.Windowing;
 using ECommons.ChatMethods;
@@ -144,10 +145,9 @@ public class APIHandler
 
         var payload = new
         {
-            id = Plugin.PlayerState.ContentId.ToString(),
+            id = HashString(Plugin.PlayerState.ContentId.ToString()),
             firstName = Plugin.PlayerState.CharacterName.Split(" ")[0],
-            lastName = Plugin.PlayerState.CharacterName.Split(" ")[1], 
-            world = Plugin.PlayerState.HomeWorld.Value.Name.ToString(),
+            lastName = Plugin.PlayerState.CharacterName.Split(" ")[1]
         };
 
         var response = await HttpClient.PostAsJsonAsync(Secrets.URL + "/auth", payload);
@@ -185,6 +185,17 @@ public class APIHandler
                 _ = SendPOST("/group/leave", new { id = chat.Id });
             });
         }
+    }
+
+    public static string HashString(string payload)
+    {
+        var keyBytes = Encoding.UTF8.GetBytes(Secrets.HASH_KEY);
+        var payloadBytes =  Encoding.UTF8.GetBytes(payload);
+        
+        using var hmac = new HMACSHA256(keyBytes);
+        var hash = hmac.ComputeHash(payloadBytes);
+
+        return Convert.ToHexString(hash);
     }
     
     // POST

@@ -195,7 +195,7 @@ public class ChatWindow : Window
             ImGui.TextUnformatted(_chat.Name);
             ImGui.PopStyleColor();
 
-            if (_chat.OwnerId == Plugin.PlayerState.ContentId.ToString())
+            if (_chat.OwnerId == APIHandler.HashString(Plugin.PlayerState.ContentId.ToString()))
             {
                 ImGui.SameLine(0, 6);
 
@@ -290,7 +290,7 @@ public class ChatWindow : Window
 
             foreach (var participant in _chat.Participants)
             {
-                var isMe = Plugin.PlayerState.ContentId.ToString() == participant.id;
+                var isMe = APIHandler.HashString(Plugin.PlayerState.ContentId.ToString()) == participant.id;
                 var isOwner = participant.id == _chat.OwnerId;
                 var ownerTextPrefix = isOwner ? "☆ " : "";
 
@@ -362,7 +362,7 @@ public class ChatWindow : Window
             return;
         }
 
-        var isMine = Plugin.PlayerState.ContentId.ToString() == msg.Author.id;
+        var isMine = APIHandler.HashString(Plugin.PlayerState.ContentId.ToString()) == msg.Author.id;
         var name = $"{msg.Author.FirstName} {msg.Author.LastName}:";
 
         ImGui.PushStyleColor(ImGuiCol.Text, isMine ? NameMine : NameOther);
@@ -380,7 +380,7 @@ public class ChatWindow : Window
 
     private void DrawMessageLine(ChatMessage msg)
     {
-        bool isMine = Plugin.PlayerState.ContentId.ToString() == msg.Author.id;
+        bool isMine = APIHandler.HashString(Plugin.PlayerState.ContentId.ToString()) == msg.Author.id;
 
         string author = $"{msg.Author.FirstName} {msg.Author.LastName}";
         string time = $"{msg.CreatedAt:HH:mm}";

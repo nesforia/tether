@@ -8,14 +8,12 @@ public class PlayerState
     private string _id;
     private string _firstName;
     private string _lastName;
-    private string _world;
 
-    public PlayerState(string id, string firstName, string lastName, string world)
+    public PlayerState(string id, string firstName, string lastName)
     {
         _id = id;
         _firstName = firstName;
         _lastName = lastName;
-        _world = world;
     }
 
     [JsonPropertyName("id")]
@@ -37,12 +35,5 @@ public class PlayerState
     {
         get => _lastName;
         set => _lastName = value ?? throw new ArgumentNullException(nameof(value));
-    }
-
-    [JsonPropertyName("world")]
-    public string World
-    {
-        get => _world;
-        set => _world = value ?? throw new ArgumentNullException(nameof(value));
     }
 }

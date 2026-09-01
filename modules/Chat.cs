@@ -26,7 +26,7 @@ public class Chat
     
     private List<GroupChat> _chats = new();
     private List<ChatWindow> _windows = new();
-    public PlayerState SystemAuthor = new PlayerState("0", "Unknown", "Unknown", "Unknown");
+    public PlayerState SystemAuthor = new PlayerState("0", "Unknown", "Unknown");
     private PlayerState? localAuthor;
     
     private PlayerState LocalAuthor
@@ -42,10 +42,9 @@ public class Chat
                 var lastName = parts.Length > 1 ? parts[1] : string.Empty;
 
                 localAuthor = new PlayerState(
-                    Plugin.PlayerState.ContentId.ToString(),
+                    APIHandler.HashString(Plugin.PlayerState.ContentId.ToString()),
                     firstName,
-                    lastName,
-                    Plugin.PlayerState.HomeWorld.Value.Name.ToString());
+                    lastName);
             }
             return localAuthor;
         }
@@ -78,7 +77,7 @@ public class Chat
     {
         APIHandler.SendPOST("/invite", new
         {
-            id = contentId
+            id = APIHandler.HashString(contentId)
         });
     }
     
@@ -144,7 +143,7 @@ public class Chat
         APIHandler.SendPOST("/group/invite", new
         {
             id = chat.Id,
-            to = contentId
+            to = APIHandler.HashString(contentId)
         });
     }
 
