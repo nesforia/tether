@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Dalamud.Interface.Windowing;
 using ECommons.ChatMethods;
@@ -144,10 +145,9 @@ public class APIHandler
 
         var payload = new
         {
-            id = Plugin.PlayerState.ContentId.ToString(),
+            id = HashString(Plugin.PlayerState.ContentId.ToString()),
             firstName = Plugin.PlayerState.CharacterName.Split(" ")[0],
-            lastName = Plugin.PlayerState.CharacterName.Split(" ")[1], 
-            world = Plugin.PlayerState.HomeWorld.Value.Name.ToString(),
+            lastName = Plugin.PlayerState.CharacterName.Split(" ")[1]
         };
 
         var response = await HttpClient.PostAsJsonAsync(Secrets.URL + "/auth", payload);
@@ -160,7 +160,7 @@ public class APIHandler
         }
         else
         {
-            Plugin.PluginLog.Error($"Cannot connect to server, retrying...");
+            Plugin.PluginLog.Warning($"Cannot connect to server, retrying...");
             await Task.Delay(10000);
             isFetching = false;
         }
@@ -186,6 +186,17 @@ public class APIHandler
             });
         }
     }
+
+    public static string HashString(string payload)
+    {
+        var keyBytes = Encoding.UTF8.GetBytes(Secrets.HASH_KEY);
+        var payloadBytes =  Encoding.UTF8.GetBytes(payload);
+        
+        using var hmac = new HMACSHA256(keyBytes);
+        var hash = hmac.ComputeHash(payloadBytes);
+
+        return Convert.ToHexString(hash);
+    }
     
     // POST
     public static async Task<HttpResponseMessage>? SendPOST(string path, object payload)
@@ -200,7 +211,7 @@ public class APIHandler
 
             if (!response.IsSuccessStatusCode)
             {
-                Plugin.PluginLog.Error(
+                Plugin.PluginLog.Warning(
                     $"Cannot send a request. Status: {(int)response.StatusCode} {response.ReasonPhrase}"
                 );
             }
@@ -209,7 +220,7 @@ public class APIHandler
         }
         catch (Exception ex)
         {
-            Plugin.PluginLog.Error(ex, $"Request to {path} failed");
+            Plugin.PluginLog.Warning(ex, $"Request to {path} failed");
         }
 
         return null;

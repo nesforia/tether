@@ -2,6 +2,7 @@
 using System.Numerics;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 
 namespace Tether.windows;
 
@@ -29,35 +30,54 @@ public class ConfigWindow : Window
 
     public override void Draw()
     {
-        ApplyWindowStyle();
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(14, 12))
+                                .Push(ImGuiStyleVar.ItemSpacing, new Vector2(6, 8))
+                                .Push(ImGuiStyleVar.FrameRounding, 6f)
+                                .Push(ImGuiStyleVar.WindowRounding, 10f)
+                                .Push(ImGuiStyleVar.GrabRounding, 6f)
+                                .Push(ImGuiStyleVar.TabRounding, 6f);
 
-        if (ImGui.BeginTabBar("##ConfigTabs", ImGuiTabBarFlags.None))
+        using var color = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
+                                .Push(ImGuiCol.FrameBg, Surface2)
+                                .Push(ImGuiCol.FrameBgHovered, new Vector4(0.16f, 0.18f, 0.24f, 1f))
+                                .Push(ImGuiCol.FrameBgActive, new Vector4(0.18f, 0.20f, 0.27f, 1f))
+                                .Push(ImGuiCol.CheckMark, Accent)
+                                .Push(ImGuiCol.SliderGrab, Accent)
+                                .Push(ImGuiCol.SliderGrabActive, AccentSoft)
+                                .Push(ImGuiCol.Tab, Surface2)
+                                .Push(ImGuiCol.TabHovered, TabHovered)
+                                .Push(ImGuiCol.TabActive, TabActive)
+                                .Push(ImGuiCol.Text, Text);
+        
+        using (ImRaii.TabBar("##ConfigTabs"))
         {
-            if (ImGui.BeginTabItem("Requests"))
+            using (var tab = ImRaii.TabItem("Requests"))
             {
-                ImGui.Dummy(new Vector2(0, 4));
-                DrawRequestsTab();
-                ImGui.EndTabItem();
+                if (tab.Success)
+                {
+                    ImGui.Dummy(new Vector2(0, 4));
+                    DrawRequestsTab();
+                }
             }
 
-            if (ImGui.BeginTabItem("Chat"))
+            using (var tab = ImRaii.TabItem("Chat"))
             {
-                ImGui.Dummy(new Vector2(0, 4));
-                DrawChatTab();
-                ImGui.EndTabItem();
+                if (tab.Success)
+                {
+                    ImGui.Dummy(new Vector2(0, 4));
+                    DrawChatTab();
+                }
             }
 
-            if (ImGui.BeginTabItem("Messages"))
+            using (var tab = ImRaii.TabItem("Messages"))
             {
-                ImGui.Dummy(new Vector2(0, 4));
-                DrawMessagesTab();
-                ImGui.EndTabItem();
+                if (tab.Success)
+                {
+                    ImGui.Dummy(new Vector2(0, 4));
+                    DrawMessagesTab();
+                }
             }
-
-            ImGui.EndTabBar();
         }
-
-        EndWindowStyle();
     }
 
     private void DrawRequestsTab()
@@ -84,11 +104,11 @@ public class ConfigWindow : Window
         if (declineAll)
         {
             ImGui.Dummy(new Vector2(0, 6));
-            ImGui.PushStyleColor(ImGuiCol.Text, TextMuted);
-            ImGui.PushTextWrapPos(0);
-            ImGui.TextUnformatted("All incoming invites are being declined automatically.");
-            ImGui.PopTextWrapPos();
-            ImGui.PopStyleColor();
+            using (ImRaii.PushColor(ImGuiCol.Text, TextMuted))
+            {
+                using var pos = ImRaii.TextWrapPos(0);
+                ImGui.TextUnformatted("All incoming invites are being declined automatically.");
+            }
         }
     }
 
@@ -120,9 +140,10 @@ public class ConfigWindow : Window
 
         ImGui.Dummy(new Vector2(0, 8));
 
-        ImGui.PushStyleColor(ImGuiCol.Text, TextMuted);
-        ImGui.TextUnformatted("Unfocused window opacity");
-        ImGui.PopStyleColor();
+        using (ImRaii.PushColor(ImGuiCol.Text, TextMuted))
+        {
+            ImGui.TextUnformatted("Unfocused window opacity");
+        }
 
         var opacityPercent = _config.OPACITY_WINDOW_CHAT_ON_UNFOCUSED * 100f;
         ImGui.SetNextItemWidth(-1);
@@ -151,43 +172,14 @@ public class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.BeginTooltip();
-            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 20f);
-            ImGui.PushStyleColor(ImGuiCol.Text, Text);
-            ImGui.TextUnformatted(tooltip);
-            ImGui.PopStyleColor();
-            ImGui.PopTextWrapPos();
-            ImGui.EndTooltip();
+            using (ImRaii.Tooltip())
+            using (ImRaii.TextWrapPos(ImGui.GetFontSize() * 20f))
+            using (ImRaii.PushColor(ImGuiCol.Text, Text))
+            {
+                ImGui.TextUnformatted(tooltip);
+            }
         }
 
         return changed;
-    }
-
-    private void ApplyWindowStyle()
-    {
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(14, 12));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(6, 8));
-        ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 6f);
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 10f);
-        ImGui.PushStyleVar(ImGuiStyleVar.GrabRounding, 6f);
-        ImGui.PushStyleVar(ImGuiStyleVar.TabRounding, 6f);
-
-        ImGui.PushStyleColor(ImGuiCol.WindowBg, Surface);
-        ImGui.PushStyleColor(ImGuiCol.FrameBg, Surface2);
-        ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, new Vector4(0.16f, 0.18f, 0.24f, 1f));
-        ImGui.PushStyleColor(ImGuiCol.FrameBgActive, new Vector4(0.18f, 0.20f, 0.27f, 1f));
-        ImGui.PushStyleColor(ImGuiCol.CheckMark, Accent);
-        ImGui.PushStyleColor(ImGuiCol.SliderGrab, Accent);
-        ImGui.PushStyleColor(ImGuiCol.SliderGrabActive, AccentSoft);
-        ImGui.PushStyleColor(ImGuiCol.Tab, Surface2);
-        ImGui.PushStyleColor(ImGuiCol.TabHovered, TabHovered);
-        ImGui.PushStyleColor(ImGuiCol.TabActive, TabActive);
-        ImGui.PushStyleColor(ImGuiCol.Text, Text);
-    }
-
-    private static void EndWindowStyle()
-    {
-        ImGui.PopStyleColor(11);
-        ImGui.PopStyleVar(6);
     }
 }
