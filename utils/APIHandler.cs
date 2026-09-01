@@ -160,7 +160,7 @@ public class APIHandler
         }
         else
         {
-            Plugin.PluginLog.Error($"Cannot connect to server, retrying...");
+            Plugin.PluginLog.Warning($"Cannot connect to server, retrying...");
             await Task.Delay(10000);
             isFetching = false;
         }
@@ -211,7 +211,7 @@ public class APIHandler
 
             if (!response.IsSuccessStatusCode)
             {
-                Plugin.PluginLog.Error(
+                Plugin.PluginLog.Warning(
                     $"Cannot send a request. Status: {(int)response.StatusCode} {response.ReasonPhrase}"
                 );
             }
@@ -220,7 +220,7 @@ public class APIHandler
         }
         catch (Exception ex)
         {
-            Plugin.PluginLog.Error(ex, $"Request to {path} failed");
+            Plugin.PluginLog.Warning(ex, $"Request to {path} failed");
         }
 
         return null;

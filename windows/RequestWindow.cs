@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 using Tether.DTO;
 using Tether.modules;
 using Tether.states;
@@ -55,35 +56,32 @@ public class RequestWindow : Window
             Decline();
         }
     }
-    
-    private static void PushStyle()
-    {
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(10, 8));
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(6, 4));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(5, 4));
-        ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 3));
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 10f);
-        ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 6f);
-        ImGui.PushStyleVar(ImGuiStyleVar.ChildRounding, 8f);
-
-        ImGui.PushStyleColor(ImGuiCol.WindowBg, Surface);
-        ImGui.PushStyleColor(ImGuiCol.Border, new Vector4(0.20f, 0.22f, 0.29f, 1f));
-        ImGui.PushStyleColor(ImGuiCol.FrameBg, Surface2);
-    }
-
 
     public override void Draw()
     {
-        PushStyle();   // push 7 vars + 3 colors
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(10, 8))
+                                .Push(ImGuiStyleVar.FramePadding, new Vector2(6, 4))
+                                .Push(ImGuiStyleVar.ItemSpacing, new Vector2(5, 4))
+                                .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 3))
+                                .Push(ImGuiStyleVar.WindowRounding, 10f)
+                                .Push(ImGuiStyleVar.FrameRounding, 6f)
+                                .Push(ImGuiStyleVar.ChildRounding, 8f);
 
-        ImGui.PushStyleColor(ImGuiCol.Text, Accent);
-        ImGui.TextUnformatted("NEW GROUP CHAT");
-        ImGui.PopStyleColor();
+        using var color = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
+                                .Push(ImGuiCol.Border, new Vector4(0.20f, 0.22f, 0.29f, 1f))
+                                .Push(ImGuiCol.FrameBg, Surface2);
 
+        using (ImRaii.PushColor(ImGuiCol.Text, Accent))
+        {
+            ImGui.TextUnformatted("NEW GROUP CHAT");
+        }
+        
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - 5f);
-        ImGui.PushStyleColor(ImGuiCol.Text, TextMuted);
-        ImGui.TextUnformatted($"{Math.Ceiling(_remaining):0}s");
-        ImGui.PopStyleColor();
+
+        using (ImRaii.PushColor(ImGuiCol.Text, TextMuted))
+        {
+            ImGui.TextUnformatted($"{Math.Ceiling(_remaining):0}s");
+        }
 
         ImGui.Dummy(new Vector2(0, 4));
 
@@ -91,41 +89,38 @@ public class RequestWindow : Window
 
         ImGui.Dummy(new Vector2(0, 4));
 
-        ImGui.PushStyleColor(ImGuiCol.Text, Text);
-        ImGui.TextUnformatted($"{_userInviteName} wants to chat with you.");
-        ImGui.PopStyleColor();
+        using (ImRaii.PushColor(ImGuiCol.Text, Text))
+        {
+            ImGui.TextUnformatted($"{_userInviteName} wants to chat with you.");
+        }
 
-        ImGui.PushStyleColor(ImGuiCol.Text, TextMuted);
-        ImGui.TextUnformatted("The invite will disappear when the timer runs out.");
-        ImGui.PopStyleColor();
+        using (ImRaii.PushColor(ImGuiCol.Text, Text))
+        {
+            ImGui.TextUnformatted("The invite will disappear when the timer runs out.");
+        }
 
         ImGui.Dummy(new Vector2(0, 2));
 
         var buttonWidth = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2f;
-
-        ImGui.PushStyleColor(ImGuiCol.Button, Green);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.43f, 0.94f, 0.70f, 1f));
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(0.28f, 0.73f, 0.52f, 1f));
-
-        if (ImGui.Button("Accept", new Vector2(buttonWidth, 34)))
-            Accept();
-
-        ImGui.PopStyleColor(3);
+        
+        using (ImRaii.PushColor(ImGuiCol.Button, Green)
+                     .Push(ImGuiCol.ButtonHovered, new Vector4(0.43f, 0.94f, 0.70f, 1f))
+                     .Push(ImGuiCol.ButtonActive, new Vector4(0.28f, 0.73f, 0.52f, 1f)))
+        {
+            if (ImGui.Button("Accept", new Vector2(buttonWidth, 34)))
+                Accept();
+        }
 
         ImGui.SameLine();
 
-        ImGui.PushStyleColor(ImGuiCol.Button, Surface2);
-        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.19f, 0.21f, 0.27f, 1f));
-        ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(0.15f, 0.17f, 0.22f, 1f));
-        ImGui.PushStyleColor(ImGuiCol.Text, TextMuted);
-
-        if (ImGui.Button("Decline", new Vector2(buttonWidth, 34)))
-            Decline();
-
-        ImGui.PopStyleColor(4);
-
-        ImGui.PopStyleColor(3);
-        ImGui.PopStyleVar(7);
+        using (ImRaii.PushColor(ImGuiCol.Button, Surface2)
+                     .Push(ImGuiCol.ButtonHovered, new Vector4(0.19f, 0.21f, 0.27f, 1f))
+                     .Push(ImGuiCol.ButtonActive, new Vector4(0.15f, 0.17f, 0.22f, 1f))
+                     .Push(ImGuiCol.Text, TextMuted))
+        {
+            if (ImGui.Button("Decline", new Vector2(buttonWidth, 34)))
+                Decline();
+        }
     }
 
 
@@ -133,15 +128,13 @@ public class RequestWindow : Window
     {
         var fraction = Math.Clamp(_remaining / DurationSeconds, 0f, 1f);
         var barColor = fraction > 0.3f ? Green : Red;
-
-        ImGui.PushStyleColor(ImGuiCol.PlotHistogram, barColor);
-        ImGui.PushStyleColor(ImGuiCol.FrameBg, Surface2);
-        ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 6f);
-
-        ImGui.ProgressBar(fraction, new Vector2(-1, 7), string.Empty);
-
-        ImGui.PopStyleVar();
-        ImGui.PopStyleColor(2);
+        
+        using (ImRaii.PushColor(ImGuiCol.PlotHistogram, barColor)
+                     .Push(ImGuiCol.FrameBg, Surface2))
+        using (ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 6f))
+        {
+            ImGui.ProgressBar(fraction, new Vector2(-1, 7), string.Empty);
+        }
     }
 
     private async void Accept()
