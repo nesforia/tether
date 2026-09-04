@@ -4,7 +4,7 @@
     "Name": "Tether",
     "InternalName": "Tether",
     "AssemblyVersion": "1.1.1.0",
-    "Description": "Create a temporary chats for you and your friends, that are working inside a duty or locked instances. Add how many people u want, and manage it from there!",
+    "Description": "Create a temporary chats for you and your friends, that are working inside a duty or locked instances. Add how many people u want, and manage it from there.",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
     "LoadRequiredState": 0,
