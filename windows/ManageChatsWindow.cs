@@ -93,23 +93,11 @@ public class ManageChatsWindow : Window
 
     private void DrawChatRow(GroupChat chat)
     {
-        ImRaii.PushId(chat.Id);
-
         using var childBg = ImRaii.PushColor(ImGuiCol.ChildBg, Surface2);
         using var border = ImRaii.PushColor(ImGuiCol.Border, new Vector4(0.19f, 0.21f, 0.28f, 1f));
         
-        if (ImRaii.Child($"##chat_{chat.Id}", new Vector2(0, 58), true))
+        using (ImRaii.Child($"##chat_{chat.Id}", new Vector2(0, 58), true))
         {
-            var draw = ImGui.GetWindowDrawList();
-            var pos = ImGui.GetWindowPos();
-
-            // Accent strip.
-            draw.AddRectFilled(
-                pos,
-                pos + new Vector2(4, ImGui.GetWindowHeight()),
-                ImGui.GetColorU32(Accent),
-                4f);
-            
             ImGui.SameLine(0, 7);
 
             using (ImRaii.PushColor(ImGuiCol.Text, Text))
