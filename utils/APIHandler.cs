@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Dalamud.Interface.Windowing;
-using ECommons.ChatMethods;
-using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using SocketIOClient;
 using Tether.config;
 using Tether.DTO;
@@ -71,7 +68,7 @@ public class APIHandler
             
                 Plugin.PluginLog.Info($"Received group request from {payload.FirstName} {payload.LastName}");
             
-                var window = new RequestWindow($"{payload.FirstName} {payload.LastName}", payload.id);
+                var window = new RequestWindow(plugin.Configuration, $"{payload.FirstName} {payload.LastName}", payload.id);
                 window.IsOpen = true;
                 window.OnClosed += w => windowSystem.RemoveWindow(w);
             
@@ -99,7 +96,7 @@ public class APIHandler
         {
             var payload =  response.GetValue<SendInviteGroupRequestPayload>(0);
             
-            var window = new RequestWindow($"{payload.firstName} {payload.lastName}", null, payload.id);
+            var window = new RequestWindow(plugin.Configuration, $"{payload.firstName} {payload.lastName}", null, payload.id);
             window.IsOpen = true;
             window.OnClosed += w => windowSystem.RemoveWindow(w);
             window.OnAcceptedGroupInvite += (groupid, participants, ownerId) =>

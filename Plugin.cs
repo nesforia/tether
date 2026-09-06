@@ -4,7 +4,6 @@ using Dalamud.Plugin;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
-using ECommons;
 using Tether.modules;
 using Tether.windows;
 
@@ -68,8 +67,6 @@ public sealed class Plugin : IDalamudPlugin
         ContextMenu.OnMenuOpened += ChatModule.DrawContextMenu;
         
         PluginInterface.UiBuilder.OpenConfigUi += () => ConfigWindow.IsOpen = true;
-        
-        ECommonsMain.Init(PluginInterface, this);
     }
     
     private void OnFrameworkUpdate(IFramework framework)
@@ -94,7 +91,7 @@ public sealed class Plugin : IDalamudPlugin
     {
         if (ChatModule.Chats.ToList().Count > 0)
         {
-            ChatModule.Chats.ToList().Each(chat =>
+            ChatModule.Chats.ToList().ForEach(chat =>
             {
                 ChatModule.RemoveGroup(chat.Id);
                 _ = APIHandler.SendPOST("/group/leave", new { id = chat.Id });
@@ -106,7 +103,6 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
         ContextMenu.OnMenuOpened -= ChatModule.DrawContextMenu;
         
-        ECommonsMain.Dispose();
         ChatModule.Dispose();
         _ = apiHandler.Disconnect();
 

@@ -39,22 +39,28 @@ public class ManageChatsWindow : Window
 
     public override void Draw()
     {
-        using var themeColor = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
-                                     .Push(ImGuiCol.ChildBg, Surface2)
-                                     .Push(ImGuiCol.Border, new Vector4(0.20f, 0.22f, 0.29f, 1f))
-                                     .Push(ImGuiCol.FrameBg, Surface2)
-                                     .Push(ImGuiCol.FrameBgHovered, SurfaceHover)
-                                     .Push(ImGuiCol.Button, Accent)
-                                     .Push(ImGuiCol.ButtonHovered, AccentHover)
-                                     .Push(ImGuiCol.ButtonActive, new Vector4(0.32f, 0.52f, 0.88f, 1f));
+        IDisposable themeColor = null;
+        IDisposable themeStyle = null;
 
-        using var themeStyle = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(10, 8))
-                                     .Push(ImGuiStyleVar.FramePadding, new Vector2(6, 4))
-                                     .Push(ImGuiStyleVar.ItemSpacing, new Vector2(5, 4))
-                                     .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 3))
-                                     .Push(ImGuiStyleVar.ScrollbarSize, 10f)
-                                     .Push(ImGuiStyleVar.WindowRounding, 10f)
-                                     .Push(ImGuiStyleVar.ChildRounding, 8f);
+        if (!plugin.Configuration.LEGACY_THEME)
+        {
+            themeColor = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
+                                         .Push(ImGuiCol.ChildBg, Surface2)
+                                         .Push(ImGuiCol.Border, new Vector4(0.20f, 0.22f, 0.29f, 1f))
+                                         .Push(ImGuiCol.FrameBg, Surface2)
+                                         .Push(ImGuiCol.FrameBgHovered, SurfaceHover)
+                                         .Push(ImGuiCol.Button, Accent)
+                                         .Push(ImGuiCol.ButtonHovered, AccentHover)
+                                         .Push(ImGuiCol.ButtonActive, new Vector4(0.32f, 0.52f, 0.88f, 1f));
+
+           themeStyle = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(10, 8))
+                                         .Push(ImGuiStyleVar.FramePadding, new Vector2(6, 4))
+                                         .Push(ImGuiStyleVar.ItemSpacing, new Vector2(5, 4))
+                                         .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 3))
+                                         .Push(ImGuiStyleVar.ScrollbarSize, 10f)
+                                         .Push(ImGuiStyleVar.WindowRounding, 10f)
+                                         .Push(ImGuiStyleVar.ChildRounding, 8f);
+        }
 
         DrawHeader();
         ImGui.Dummy(new Vector2(0, 5));
@@ -72,6 +78,9 @@ public class ManageChatsWindow : Window
                 DrawChatRow(chat);  
             }
         }
+        
+        themeStyle?.Dispose();
+        themeColor?.Dispose();
     }
 
     private static void DrawHeader()
@@ -93,8 +102,8 @@ public class ManageChatsWindow : Window
 
     private void DrawChatRow(GroupChat chat)
     {
-        using var childBg = ImRaii.PushColor(ImGuiCol.ChildBg, Surface2);
-        using var border = ImRaii.PushColor(ImGuiCol.Border, new Vector4(0.19f, 0.21f, 0.28f, 1f));
+        using var childBg = ImRaii.PushColor(ImGuiCol.ChildBg, Surface2, !plugin.Configuration.LEGACY_THEME);
+        using var border = ImRaii.PushColor(ImGuiCol.Border, new Vector4(0.19f, 0.21f, 0.28f, 1f), !plugin.Configuration.LEGACY_THEME);
         
         using (ImRaii.Child($"##chat_{chat.Id}", new Vector2(0, 58), true))
         {
@@ -118,9 +127,9 @@ public class ManageChatsWindow : Window
 
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - totalButtonWidth);
             
-            using (ImRaii.PushColor(ImGuiCol.Button, Accent)
-                         .Push(ImGuiCol.ButtonHovered, AccentHover)
-                         .Push(ImGuiCol.ButtonActive, new Vector4(0.32f, 0.52f, 0.88f, 1f)))
+            using (ImRaii.PushColor(ImGuiCol.Button, Accent, !plugin.Configuration.LEGACY_THEME)
+                         .Push(ImGuiCol.ButtonHovered, AccentHover, !plugin.Configuration.LEGACY_THEME)
+                         .Push(ImGuiCol.ButtonActive, new Vector4(0.32f, 0.52f, 0.88f, 1f), !plugin.Configuration.LEGACY_THEME))
             {
                 if (ImGui.Button("Open", new Vector2(buttonWidth, 32)))
                 {
@@ -132,10 +141,10 @@ public class ManageChatsWindow : Window
 
             ImGui.SameLine();
 
-            using (ImRaii.PushColor(ImGuiCol.Button, Surface)
-                         .Push(ImGuiCol.ButtonHovered, new Vector4(0.22f, 0.15f, 0.18f, 1f))
-                         .Push(ImGuiCol.ButtonActive, new Vector4(0.28f, 0.17f, 0.20f, 1f))
-                         .Push(ImGuiCol.Text, Red))
+            using (ImRaii.PushColor(ImGuiCol.Button, Surface, !plugin.Configuration.LEGACY_THEME)
+                         .Push(ImGuiCol.ButtonHovered, new Vector4(0.22f, 0.15f, 0.18f, 1f), !plugin.Configuration.LEGACY_THEME)
+                         .Push(ImGuiCol.ButtonActive, new Vector4(0.28f, 0.17f, 0.20f, 1f), !plugin.Configuration.LEGACY_THEME)
+                         .Push(ImGuiCol.Text, Red, !plugin.Configuration.LEGACY_THEME))
             {
                 if (ImGui.Button("Leave", new Vector2(buttonWidth, 32)))
                 {

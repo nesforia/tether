@@ -69,7 +69,7 @@ public class ChatWindow : Window
         
         _pulseActive = _newMessage && _config.DISPLAY_NOTIFICATIONS_ON_NEW_MESSAGE;
 
-        _windowColors = ImRaii.PushColor(ImGuiCol.WindowBg, Surface);
+        _windowColors = ImRaii.PushColor(ImGuiCol.WindowBg, Surface, !_config.LEGACY_THEME);
     
         if (_pulseActive)
         {
@@ -94,66 +94,75 @@ public class ChatWindow : Window
         _windowColors = null;
     }
 
-    public override void Draw()
+public override void Draw()
+{
+    UnfocusedAlpha = _config.OPACITY_WINDOW_CHAT_ON_UNFOCUSED;
+    _isFocused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
+    var compact = _config.COMPACT_CHAT_MODE || _config.LEGACY_THEME;
+
+    if (_isFocused)
     {
-        UnfocusedAlpha = _config.OPACITY_WINDOW_CHAT_ON_UNFOCUSED;
-        _isFocused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
-        var compact = _config.COMPACT_CHAT_MODE;
-
-        if (_isFocused)
-        {
-            using var alpha = ImRaii.PushStyle(ImGuiStyleVar.Alpha, 1f);
-            _newMessage = false;
-            _alphaStyles?.Dispose();
-            _alphaStyles = null;
-        }
-
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(10, 8))
-                                .Push(ImGuiStyleVar.FramePadding, new Vector2(6, 4))
-                                .Push(ImGuiStyleVar.ItemSpacing, compact ? new Vector2(4, 2) : new Vector2(5, 4))
-                                .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 3))
-                                .Push(ImGuiStyleVar.ScrollbarSize, 10f)
-                                .Push(ImGuiStyleVar.WindowRounding, 10f)
-                                .Push(ImGuiStyleVar.ChildRounding, 8f)
-                                .Push(ImGuiStyleVar.FrameRounding, 6f);
-
-        using var color = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
-                                .Push(ImGuiCol.ChildBg, Surface)
-                                .Push(ImGuiCol.Border, new Vector4(0.20f, 0.22f, 0.29f, 1f))
-                                .Push(ImGuiCol.FrameBg, Surface2)
-                                .Push(ImGuiCol.FrameBgHovered, new Vector4(0.16f, 0.18f, 0.24f, 1f))
-                                .Push(ImGuiCol.FrameBgActive, new Vector4(0.18f, 0.20f, 0.27f, 1f))
-                                .Push(ImGuiCol.Button, AccentSoft)
-                                .Push(ImGuiCol.ButtonHovered, Accent)
-                                .Push(ImGuiCol.ButtonActive, new Vector4(0.32f, 0.52f, 0.88f, 1f));
-
-        DrawChatHeader();
-        ImGui.Spacing();
-
-        if (_showParticipants)
-        {
-            var contentWidth = ImGui.GetContentRegionAvail().X;
-            var mainWidth = MathF.Max(120f, contentWidth - SidebarWidth - ImGui.GetStyle().ItemSpacing.X);
-
-            ImGui.BeginGroup();
-            DrawMessageLog(mainWidth);
-            ImGui.Spacing();
-            DrawInputRow(mainWidth);
-            ImGui.EndGroup();
-
-            ImGui.SameLine();
-
-            DrawParticipantsSidebar(SidebarWidth);
-        }
-        else
-        {
-            var fullWidth = ImGui.GetContentRegionAvail().X;
-            DrawMessageLog(fullWidth);
-            ImGui.Spacing();
-            DrawInputRow(fullWidth);
-        }
-
+        using var alpha = ImRaii.PushStyle(ImGuiStyleVar.Alpha, 1f);
+        _newMessage = false;
+        _alphaStyles?.Dispose();
+        _alphaStyles = null;
     }
+    
+    IDisposable style = null;
+    IDisposable color = null;
+
+    if (!_config.LEGACY_THEME)
+    {
+        style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(10, 8))
+                      .Push(ImGuiStyleVar.FramePadding, new Vector2(6, 4))
+                      .Push(ImGuiStyleVar.ItemSpacing, compact ? new Vector2(4, 2) : new Vector2(5, 4))
+                      .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 3))
+                      .Push(ImGuiStyleVar.ScrollbarSize, 10f)
+                      .Push(ImGuiStyleVar.WindowRounding, 10f)
+                      .Push(ImGuiStyleVar.ChildRounding, 8f)
+                      .Push(ImGuiStyleVar.FrameRounding, 6f);
+
+        color = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
+                      .Push(ImGuiCol.ChildBg, Surface)
+                      .Push(ImGuiCol.Border, new Vector4(0.20f, 0.22f, 0.29f, 1f))
+                      .Push(ImGuiCol.FrameBg, Surface2)
+                      .Push(ImGuiCol.FrameBgHovered, new Vector4(0.16f, 0.18f, 0.24f, 1f))
+                      .Push(ImGuiCol.FrameBgActive, new Vector4(0.18f, 0.20f, 0.27f, 1f))
+                      .Push(ImGuiCol.Button, AccentSoft)
+                      .Push(ImGuiCol.ButtonHovered, Accent)
+                      .Push(ImGuiCol.ButtonActive, new Vector4(0.32f, 0.52f, 0.88f, 1f));
+    }
+
+    DrawChatHeader();
+    ImGui.Spacing();
+
+    if (_showParticipants)
+    {
+        var contentWidth = ImGui.GetContentRegionAvail().X;
+        var mainWidth = MathF.Max(120f, contentWidth - SidebarWidth - ImGui.GetStyle().ItemSpacing.X);
+
+        ImGui.BeginGroup();
+        DrawMessageLog(mainWidth);
+        ImGui.Spacing();
+        DrawInputRow(mainWidth);
+        ImGui.EndGroup();
+
+        ImGui.SameLine();
+
+        DrawParticipantsSidebar(SidebarWidth);
+    }
+    else
+    {
+        var fullWidth = ImGui.GetContentRegionAvail().X;
+        DrawMessageLog(fullWidth);
+        ImGui.Spacing();
+        DrawInputRow(fullWidth);
+    }
+
+    color?.Dispose();
+    style?.Dispose();
+    
+}
 
     private void DrawChatHeader()
     {
@@ -208,7 +217,7 @@ public class ChatWindow : Window
         DrawParticipantsToggleButton();
 
         ImGui.Dummy(new Vector2(0, 5));
-        using (ImRaii.PushColor(ImGuiCol.Separator, new Vector4(0.22f, 0.25f, 0.33f, 1f)))
+        using (ImRaii.PushColor(ImGuiCol.Separator, new Vector4(0.22f, 0.25f, 0.33f, 1f), !_config.LEGACY_THEME))
         {
             ImGui.Separator();
         }
@@ -268,8 +277,8 @@ public class ChatWindow : Window
 
     private void DrawParticipantsSidebar(float width)
     {
-        using (ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.075f, 0.08f, 0.11f, 1f)))
-        using (ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 8f))
+        using (ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.075f, 0.08f, 0.11f, 1f), !_config.LEGACY_THEME))
+        using (ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 8f, !_config.LEGACY_THEME))
         using (ImRaii.Child("##Participants", new Vector2(width, 0), true))
         {
             using (ImRaii.PushColor(ImGuiCol.Text, TextMuted))
@@ -278,7 +287,7 @@ public class ChatWindow : Window
             }
 
             ImGui.Dummy(new Vector2(0, 4));
-            using (ImRaii.PushColor(ImGuiCol.Separator, new Vector4(0.22f, 0.25f, 0.33f, 1f)))
+            using (ImRaii.PushColor(ImGuiCol.Separator, new Vector4(0.22f, 0.25f, 0.33f, 1f), !_config.LEGACY_THEME))
             {
                 ImGui.Separator();
             }
@@ -309,7 +318,7 @@ public class ChatWindow : Window
         using (ImRaii.Child("##ChatLog", new Vector2(width, logHeight), true, ImGuiWindowFlags.HorizontalScrollbar))
         {
             var tempMsg = _chat.Messages.ToArray();
-            var compact = _config.COMPACT_CHAT_MODE;
+            var compact = _config.COMPACT_CHAT_MODE || _config.LEGACY_THEME;
 
             foreach (var msg in tempMsg)
             {
@@ -327,10 +336,7 @@ public class ChatWindow : Window
             _scrollToBottom = false;
         }
     }
-
-    // Compact mode: one flat line per message, no bubble background, minimal
-    // vertical space. System lines just render muted instead of getting their
-    // own bubble treatment.
+    
     private void DrawMessageLineCompact(ChatMessage msg)
     {
         var isSystem = msg.Author.id == "0";
