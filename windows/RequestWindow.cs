@@ -20,6 +20,8 @@ public class RequestWindow : Window
     private readonly string _userInviteId;
     private float _remaining = DurationSeconds;
 
+    private Configuration _config;
+    
     public Action<RequestWindow>? OnClosed;
     public Action<string, PlayerState[], string>? OnAcceptedGroupInvite;
 
@@ -31,12 +33,13 @@ public class RequestWindow : Window
     private static readonly Vector4 Green = new(0.35f, 0.86f, 0.62f, 1f);
     private static readonly Vector4 Red = new(0.95f, 0.34f, 0.40f, 1f);
 
-    public RequestWindow(string userInviteName, string userInviteId, string? groupId = null)
+    public RequestWindow(Configuration config, string userInviteName, string userInviteId, string? groupId = null)
         : base($"New Chat Invite###Invite_{userInviteId}_{Guid.NewGuid():N}")
     {
         _userInviteName = userInviteName;
         _userInviteId = userInviteId;
         _groupId = groupId;
+        _config = config;
 
         Size = new Vector2(360, 215);
         SizeCondition = ImGuiCond.Always;
@@ -59,17 +62,23 @@ public class RequestWindow : Window
 
     public override void Draw()
     {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(10, 8))
-                                .Push(ImGuiStyleVar.FramePadding, new Vector2(6, 4))
-                                .Push(ImGuiStyleVar.ItemSpacing, new Vector2(5, 4))
-                                .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 3))
-                                .Push(ImGuiStyleVar.WindowRounding, 10f)
-                                .Push(ImGuiStyleVar.FrameRounding, 6f)
-                                .Push(ImGuiStyleVar.ChildRounding, 8f);
+        IDisposable style = null;
+        IDisposable color = null;
 
-        using var color = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
-                                .Push(ImGuiCol.Border, new Vector4(0.20f, 0.22f, 0.29f, 1f))
-                                .Push(ImGuiCol.FrameBg, Surface2);
+        if (!_config.LEGACY_THEME)
+        {
+            style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(10, 8))
+                                    .Push(ImGuiStyleVar.FramePadding, new Vector2(6, 4))
+                                    .Push(ImGuiStyleVar.ItemSpacing, new Vector2(5, 4))
+                                    .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 3))
+                                    .Push(ImGuiStyleVar.WindowRounding, 10f)
+                                    .Push(ImGuiStyleVar.FrameRounding, 6f)
+                                    .Push(ImGuiStyleVar.ChildRounding, 8f);
+
+            color = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
+                                    .Push(ImGuiCol.Border, new Vector4(0.20f, 0.22f, 0.29f, 1f))
+                                    .Push(ImGuiCol.FrameBg, Surface2);
+        }
 
         using (ImRaii.PushColor(ImGuiCol.Text, Accent))
         {
@@ -103,9 +112,9 @@ public class RequestWindow : Window
 
         var buttonWidth = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2f;
         
-        using (ImRaii.PushColor(ImGuiCol.Button, Green)
-                     .Push(ImGuiCol.ButtonHovered, new Vector4(0.43f, 0.94f, 0.70f, 1f))
-                     .Push(ImGuiCol.ButtonActive, new Vector4(0.28f, 0.73f, 0.52f, 1f)))
+        using (ImRaii.PushColor(ImGuiCol.Button, Green, !_config.LEGACY_THEME)
+                     .Push(ImGuiCol.ButtonHovered, new Vector4(0.43f, 0.94f, 0.70f, 1f), !_config.LEGACY_THEME)
+                     .Push(ImGuiCol.ButtonActive, new Vector4(0.28f, 0.73f, 0.52f, 1f), !_config.LEGACY_THEME))
         {
             if (ImGui.Button("Accept", new Vector2(buttonWidth, 34)))
                 Accept();
@@ -113,14 +122,17 @@ public class RequestWindow : Window
 
         ImGui.SameLine();
 
-        using (ImRaii.PushColor(ImGuiCol.Button, Surface2)
-                     .Push(ImGuiCol.ButtonHovered, new Vector4(0.19f, 0.21f, 0.27f, 1f))
-                     .Push(ImGuiCol.ButtonActive, new Vector4(0.15f, 0.17f, 0.22f, 1f))
+        using (ImRaii.PushColor(ImGuiCol.Button, Surface2, !_config.LEGACY_THEME)
+                     .Push(ImGuiCol.ButtonHovered, new Vector4(0.19f, 0.21f, 0.27f, 1f), !_config.LEGACY_THEME)
+                     .Push(ImGuiCol.ButtonActive, new Vector4(0.15f, 0.17f, 0.22f, 1f), !_config.LEGACY_THEME)
                      .Push(ImGuiCol.Text, TextMuted))
         {
             if (ImGui.Button("Decline", new Vector2(buttonWidth, 34)))
                 Decline();
         }
+        
+        style?.Dispose();
+        color?.Dispose();
     }
 
 
@@ -130,8 +142,8 @@ public class RequestWindow : Window
         var barColor = fraction > 0.3f ? Green : Red;
         
         using (ImRaii.PushColor(ImGuiCol.PlotHistogram, barColor)
-                     .Push(ImGuiCol.FrameBg, Surface2))
-        using (ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 6f))
+                     .Push(ImGuiCol.FrameBg, Surface2, !_config.LEGACY_THEME))
+        using (ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 6f, !_config.LEGACY_THEME))
         {
             ImGui.ProgressBar(fraction, new Vector2(-1, 7), string.Empty);
         }
@@ -157,7 +169,6 @@ public class RequestWindow : Window
 
     private void Decline()
     {
-        // No decline notification is wired yet; closing the invite remains the current behavior.
         Close();
     }
 

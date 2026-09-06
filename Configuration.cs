@@ -20,6 +20,7 @@ public class Configuration : IPluginConfiguration
     
     // # MESSAGES SETTINGS
     public bool COMPACT_CHAT_MODE { get; set; } = false;
+    public bool LEGACY_THEME  { get; set; } = false;
     
 
     // The below exists just to make saving less cumbersome

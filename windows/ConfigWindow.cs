@@ -1,4 +1,6 @@
 ﻿// windows/ConfigWindow.cs
+
+using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
@@ -30,24 +32,30 @@ public class ConfigWindow : Window
 
     public override void Draw()
     {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(14, 12))
-                                .Push(ImGuiStyleVar.ItemSpacing, new Vector2(6, 8))
-                                .Push(ImGuiStyleVar.FrameRounding, 6f)
-                                .Push(ImGuiStyleVar.WindowRounding, 10f)
-                                .Push(ImGuiStyleVar.GrabRounding, 6f)
-                                .Push(ImGuiStyleVar.TabRounding, 6f);
+        IDisposable style = null;
+        IDisposable color = null;
 
-        using var color = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
-                                .Push(ImGuiCol.FrameBg, Surface2)
-                                .Push(ImGuiCol.FrameBgHovered, new Vector4(0.16f, 0.18f, 0.24f, 1f))
-                                .Push(ImGuiCol.FrameBgActive, new Vector4(0.18f, 0.20f, 0.27f, 1f))
-                                .Push(ImGuiCol.CheckMark, Accent)
-                                .Push(ImGuiCol.SliderGrab, Accent)
-                                .Push(ImGuiCol.SliderGrabActive, AccentSoft)
-                                .Push(ImGuiCol.Tab, Surface2)
-                                .Push(ImGuiCol.TabHovered, TabHovered)
-                                .Push(ImGuiCol.TabActive, TabActive)
-                                .Push(ImGuiCol.Text, Text);
+        if (!_config.LEGACY_THEME)
+        {
+            style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(14, 12))
+                                    .Push(ImGuiStyleVar.ItemSpacing, new Vector2(6, 8))
+                                    .Push(ImGuiStyleVar.FrameRounding, 6f)
+                                    .Push(ImGuiStyleVar.WindowRounding, 10f)
+                                    .Push(ImGuiStyleVar.GrabRounding, 6f)
+                                    .Push(ImGuiStyleVar.TabRounding, 6f);
+
+            color = ImRaii.PushColor(ImGuiCol.WindowBg, Surface)
+                                    .Push(ImGuiCol.FrameBg, Surface2)
+                                    .Push(ImGuiCol.FrameBgHovered, new Vector4(0.16f, 0.18f, 0.24f, 1f))
+                                    .Push(ImGuiCol.FrameBgActive, new Vector4(0.18f, 0.20f, 0.27f, 1f))
+                                    .Push(ImGuiCol.CheckMark, Accent)
+                                    .Push(ImGuiCol.SliderGrab, Accent)
+                                    .Push(ImGuiCol.SliderGrabActive, AccentSoft)
+                                    .Push(ImGuiCol.Tab, Surface2)
+                                    .Push(ImGuiCol.TabHovered, TabHovered)
+                                    .Push(ImGuiCol.TabActive, TabActive)
+                                    .Push(ImGuiCol.Text, Text);
+        }
         
         using (ImRaii.TabBar("##ConfigTabs"))
         {
@@ -78,6 +86,9 @@ public class ConfigWindow : Window
                 }
             }
         }
+        
+        style?.Dispose();
+        color?.Dispose();
     }
 
     private void DrawRequestsTab()
@@ -157,12 +168,24 @@ public class ConfigWindow : Window
 
     private void DrawMessagesTab()
     {
-        var compact = _config.COMPACT_CHAT_MODE;
-        if (Checkbox("Compact mode", ref compact,
-                "Denser message layout — smaller spacing, no bubbles."))
+
+        var legacy = _config.LEGACY_THEME;
+        if (Checkbox("Legacy mode", ref legacy,
+                     "Remove custom styles from plugin, applies Dalamud theme."))
         {
-            _config.COMPACT_CHAT_MODE = compact;
+            _config.LEGACY_THEME = legacy;
             _config.Save();
+        }
+        
+        using (ImRaii.Disabled(_config.LEGACY_THEME))
+        {
+            var compact = _config.COMPACT_CHAT_MODE;
+            if (Checkbox("Compact mode", ref compact,
+                         "Denser message layout — smaller spacing, no bubbles."))
+            {
+                _config.COMPACT_CHAT_MODE = compact;
+                _config.Save();
+            }
         }
     }
 

@@ -1,18 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Dalamud.Bindings.ImGui;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
-using Dalamud.Game.Network.Structures.InfoProxy;
 using Dalamud.Game.Text;
 using Dalamud.Interface.Windowing;
-using ECommons.DalamudServices.Legacy;
-using ECommons.GameHelpers;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using Tether.states;
 using Tether.windows;
@@ -208,9 +199,10 @@ public class Chat
 
         args.AddMenuItem(new MenuItem
         {
-            Name = "Groups",
-            Prefix = SeIconChar.BoxedLetterG,
+            Name = "Tether Groups",
+            Prefix = SeIconChar.BoxedLetterT,
             IsSubmenu = true,
+            PrefixColor = 12,
             OnClicked = clickArgs =>
             {
                 var submenuItems = new List<MenuItem>
