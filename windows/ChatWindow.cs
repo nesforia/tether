@@ -94,11 +94,11 @@ public class ChatWindow : Window
         _windowColors = null;
     }
 
-public override void Draw()
+    public override void Draw()
 {
     UnfocusedAlpha = _config.OPACITY_WINDOW_CHAT_ON_UNFOCUSED;
     _isFocused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
-    var compact = _config.COMPACT_CHAT_MODE || _config.LEGACY_THEME;
+    var legacy = _config.LEGACY_THEME;
 
     if (_isFocused)
     {
@@ -111,11 +111,11 @@ public override void Draw()
     IDisposable style = null;
     IDisposable color = null;
 
-    if (!_config.LEGACY_THEME)
+    if (!legacy)
     {
         style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(10, 8))
                       .Push(ImGuiStyleVar.FramePadding, new Vector2(6, 4))
-                      .Push(ImGuiStyleVar.ItemSpacing, compact ? new Vector2(4, 2) : new Vector2(5, 4))
+                      .Push(ImGuiStyleVar.ItemSpacing, legacy ? new Vector2(4, 2) : new Vector2(5, 4))
                       .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 3))
                       .Push(ImGuiStyleVar.ScrollbarSize, 10f)
                       .Push(ImGuiStyleVar.WindowRounding, 10f)
@@ -233,7 +233,7 @@ public override void Draw()
     private void SaveChatName()
     {
         if (!string.IsNullOrWhiteSpace(_editedChatName))
-            _ = APIHandler.SendPOST("/group/rename", new
+            _ = APIHandler.SendApiRequest("/group/rename", new
             {
                 groupId = _chat.Id,
                 newName = _editedChatName
@@ -318,16 +318,10 @@ public override void Draw()
         using (ImRaii.Child("##ChatLog", new Vector2(width, logHeight), true, ImGuiWindowFlags.HorizontalScrollbar))
         {
             var tempMsg = _chat.Messages.ToArray();
-            var compact = _config.COMPACT_CHAT_MODE || _config.LEGACY_THEME;
 
             foreach (var msg in tempMsg)
             {
-                if (compact)
-                    DrawMessageLineCompact(msg);
-                else if (msg.Author.id != "0")
-                    DrawMessageLine(msg);
-                else
-                    DrawSystemLine(msg);
+                DrawMessageLine(msg);
             }
 
             if (_scrollToBottom || ImGui.GetScrollY() >= ImGui.GetScrollMaxY() - 5f)
@@ -337,10 +331,10 @@ public override void Draw()
         }
     }
     
-    private void DrawMessageLineCompact(ChatMessage msg)
+    private void DrawMessageLine(ChatMessage msg)
     {
         var isSystem = msg.Author.id == "0";
-        var time = $"{msg.CreatedAt:HH:mm}";
+        var time = $"[{msg.CreatedAt:HH:mm}]";
 
         using (ImRaii.PushColor(ImGuiCol.Text, TextMuted))
         {
@@ -374,93 +368,6 @@ public override void Draw()
         {
             ImGui.TextUnformatted(msg.Message);
         }
-    }
-
-    private void DrawMessageLine(ChatMessage msg)
-    {
-        bool isMine = APIHandler.HashString(Plugin.PlayerState.ContentId.ToString()) == msg.Author.id;
-
-        string author = $"{msg.Author.FirstName} {msg.Author.LastName}";
-        string time = $"{msg.CreatedAt:HH:mm}";
-
-        const float paddingX = 12f;
-        const float paddingY = 8f;
-
-        float bubbleWidth = ImGui.GetContentRegionAvail().X;
-        float textWidth = bubbleWidth - paddingX * 2f;
-
-        Vector2 messageSize = ImGui.CalcTextSize(msg.Message, false, textWidth);
-
-        float headerHeight = ImGui.GetTextLineHeight();
-        float spacing = ImGui.GetStyle().ItemSpacing.Y;
-
-        float bubbleHeight = paddingY * 2f + headerHeight + spacing + messageSize.Y + 2f;
-
-        string id = $"##Bubble_{msg.CreatedAt.Ticks}_{msg.Author.id}";
-
-        using (ImRaii.PushColor(ImGuiCol.ChildBg, isMine ? PastelPink : PastelBlue))
-        using (ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 12f).Push(ImGuiStyleVar.WindowPadding, new Vector2(paddingX, paddingY)))
-        using (ImRaii.Child(id, new Vector2(bubbleWidth, bubbleHeight), true,
-                            ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
-        {
-            using (ImRaii.PushColor(ImGuiCol.Text, isMine ? Accent : Text))
-            {
-                ImGui.TextUnformatted(author);
-            }
-
-            ImGui.SameLine(0, 8);
-
-            using (ImRaii.PushColor(ImGuiCol.Text, TextMuted))
-            {
-                ImGui.TextUnformatted(time);
-            }
-
-            using (ImRaii.PushColor(ImGuiCol.Text, Text))
-            {
-                ImGui.TextWrapped(msg.Message);
-            }
-        }
-
-        ImGui.Dummy(new Vector2(0, 6f));
-    }
-
-    private void DrawSystemLine(ChatMessage msg)
-    {
-        string time = $"{msg.CreatedAt:HH:mm}";
-
-        const float paddingX = 12f;
-        const float paddingY = 8f;
-
-        float bubbleWidth = ImGui.GetContentRegionAvail().X;
-        float textWidth = MathF.Max(1f, bubbleWidth - paddingX * 2f);
-
-        Vector2 messageSize = ImGui.CalcTextSize(msg.Message, false, textWidth);
-
-        float timeHeight = ImGui.GetTextLineHeight();
-        float spacing = ImGui.GetStyle().ItemSpacing.Y;
-
-        float bubbleHeight = paddingY * 2f + timeHeight + spacing + messageSize.Y + 2f;
-        
-        string id = $"##SystemBubble_{msg.CreatedAt.Ticks}";
-        
-        using (ImRaii.PushColor(ImGuiCol.ChildBg, PastelPink))
-        using (ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 12f)
-                     .Push(ImGuiStyleVar.WindowPadding, new Vector2(paddingX, paddingY)))
-        using (ImRaii.Child(id, new Vector2(bubbleWidth, bubbleHeight), true,
-                            ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
-        {
-            using (ImRaii.PushColor(ImGuiCol.Text, Text))
-            {
-                ImGui.TextUnformatted(time); 
-            }
-
-            using (ImRaii.PushColor(ImGuiCol.Text, Text))
-            {
-                ImGui.TextWrapped(msg.Message);  
-            }
-        }
-
-        ImGui.Dummy(new Vector2(0, 6f));
     }
 
     private void DrawInputRow(float width)

@@ -10,6 +10,7 @@ using Dalamud.Interface.Windowing;
 using SocketIOClient;
 using Tether.config;
 using Tether.DTO;
+using Tether.enums;
 using Tether.states;
 using Tether.windows;
 
@@ -19,10 +20,10 @@ public class APIHandler
 {
     static string? Token = null;
     static readonly HttpClient HttpClient = new();
-    private bool isFetching = false;
+    public static bool isFetching = false;
     private SocketIO? client;
+    private static APIHandler? _instance;
     
-    //
     private readonly WindowSystem windowSystem;
     private readonly Plugin plugin;
     
@@ -30,6 +31,7 @@ public class APIHandler
     {
         this.windowSystem = windowSystem;
         this.plugin = plugin;
+        _instance = this;
     }
 
     /*
@@ -43,7 +45,9 @@ public class APIHandler
             Auth = new Dictionary<string, string>
             {
                 { "token", Token }
-            }
+            },
+            Reconnection = true,
+            ReconnectionDelayMax = 5000
         });
 
         client.OnConnected += async (Sender, e) =>
@@ -51,10 +55,31 @@ public class APIHandler
             Plugin.PluginLog.Info("Connected to server");
         };
 
-        client.OnDisconnected += (Sender, e) =>
+        client.OnDisconnected += async (Sender, e) =>
         {
-            Plugin.PluginLog.Info("Disconnected from server");
-            Disconnect();
+            // Clearing chats
+            await Disconnect();
+            
+            // Try to connect to server again after losing socket connection with server
+            if (e == EErrorMessageReturn.TRANSPORT_ERROR)
+            {
+                Plugin.PluginLog.Info($"Server is not responding.");
+                return;
+            }
+            
+            Plugin.PluginLog.Info($"Disconnected from server");
+        };
+
+        client.OnReconnectAttempt += async (Sender, e) =>
+        {
+            Plugin.PluginLog.Info($"Reconnecting to server...");
+            if (!isFetching)
+            {
+                Token = null;
+                await GenerateUserToken();
+                if (client?.Options?.Auth is Dictionary<string, string> auth && Token is not null)
+                    auth["token"] = Token;
+            }
         };
         
         client.On(ESocketEvent.SEND_GROUP_REQUEST, async response =>
@@ -136,29 +161,39 @@ public class APIHandler
 
     public async Task GenerateUserToken()
     {
-        if (Token is not null) return;
-        if (isFetching) return;
-        isFetching = true;
-
-        var payload = new
+        try
         {
-            id = HashString(Plugin.PlayerState.ContentId.ToString()),
-            firstName = Plugin.PlayerState.CharacterName.Split(" ")[0],
-            lastName = Plugin.PlayerState.CharacterName.Split(" ")[1]
-        };
+            if (Token is not null) return;
+            if (isFetching) return;
+            isFetching = true;
 
-        var response = await HttpClient.PostAsJsonAsync(Secrets.URL + "/auth", payload);
-        if (response.IsSuccessStatusCode)
-        {
-            var result = await response.Content.ReadFromJsonAsync<RequestTokenPayload>();
-            Token = result?.Token;
-            isFetching = false;
-            ConnectToSocket();
+            var payload = new
+            {
+                id = HashString(Plugin.PlayerState.ContentId.ToString()),
+                firstName = Plugin.PlayerState.CharacterName.Split(" ")[0],
+                lastName = Plugin.PlayerState.CharacterName.Split(" ")[1]
+            };
+
+            Plugin.PluginLog.Info($"Fetching user token...");
+            var response = await HttpClient.PostAsJsonAsync(Secrets.URL + "/auth", payload);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<RequestTokenPayload>();
+                Token = result?.Token;
+
+                if (client is null)
+                {
+                    ConnectToSocket();
+                    await FetchRooms();
+                }
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Plugin.PluginLog.Warning($"Cannot connect to server, retrying...");
+            Plugin.PluginLog.Warning("Failed to generate user token, server may be unreachable.");
             await Task.Delay(10000);
+        } finally { 
+            Plugin.PluginLog.Information($"Token for user generated: {Token}");
             isFetching = false;
         }
     }
@@ -167,8 +202,8 @@ public class APIHandler
     {
         if (client is null) return;
 
-        await client.DisconnectAsync();
-        client.Dispose();
+        await client?.DisconnectAsync();
+        client?.Dispose();
         client = null;
         Token = null;
         isFetching = false;
@@ -179,7 +214,7 @@ public class APIHandler
             plugin.ChatModule.Chats.ToList().ForEach(chat =>
             {
                 plugin.ChatModule.RemoveGroup(chat.Id);
-                _ = SendPOST("/group/leave", new { id = chat.Id });
+                _ = SendApiRequest("/group/leave", new { id = chat.Id });
             });
         }
     }
@@ -194,26 +229,57 @@ public class APIHandler
 
         return Convert.ToHexString(hash);
     }
-    
-    // POST
-    public static async Task<HttpResponseMessage>? SendPOST(string path, object payload)
+
+    public async Task FetchRooms()
     {
+        var req = await SendApiRequest("/rooms", new() {}, HttpMethod.Get);
+        if (req is null) return;
+        
+        var rooms = await req.Content.ReadFromJsonAsync<GroupChat[]>();
+        
+        foreach (var groupChat in rooms)
+        {
+            if (plugin.ChatModule.Chats.Find(s => s.Id == groupChat.Id) is not null) continue;
+            plugin.ChatModule.CreateChat(groupChat.Id, groupChat.Participants.ToArray(), groupChat.OwnerId);
+            
+        }
+    }
+    
+    // STATIC UTILS
+    public static async Task<HttpResponseMessage?> SendApiRequest(string path, object payload, HttpMethod? method = null)
+    {
+        const int maxRetries = 5;
+
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, Secrets.URL + path);
-            request.Headers.Add("x-auth-token", Token);
-            request.Content = JsonContent.Create(payload);
-
-            var response = await HttpClient.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode)
+            for (var attempt = 0; attempt <= maxRetries; attempt++)
             {
-                Plugin.PluginLog.Warning(
-                    $"Cannot send a request. Status: {(int)response.StatusCode} {response.ReasonPhrase}"
-                );
+                if (attempt > 0) await Task.Delay(1000);
+                
+                using var request = new HttpRequestMessage(method ?? HttpMethod.Post, Secrets.URL + path);
+                request.Headers.Add("x-auth-token", Token);
+                request.Content = JsonContent.Create(payload);
+
+                var response = await HttpClient.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return response;
+                }
+
+                var error = await response.Content.ReadFromJsonAsync<ErrorReturn>();
+                if (error?.message == EErrorMessageReturn.TOKEN_EXPIRED)
+                {
+                    Token = null;
+                    Plugin.PluginLog.Warning($"Trying to refresh token... {attempt}/{maxRetries}");
+
+                    await (_instance?.GenerateUserToken() ?? Task.CompletedTask);
+                }
+                
             }
 
-            return response;
+            Plugin.PluginLog.Warning($"Request failed after {maxRetries} attempts.");
+            return null;
         }
         catch (Exception ex)
         {
