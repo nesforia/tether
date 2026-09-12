@@ -19,7 +19,6 @@ public class Configuration : IPluginConfiguration
     public float OPACITY_WINDOW_CHAT_ON_UNFOCUSED { get; set; } = 0.5f;
     
     // # MESSAGES SETTINGS
-    public bool COMPACT_CHAT_MODE { get; set; } = false;
     public bool LEGACY_THEME  { get; set; } = false;
     
 

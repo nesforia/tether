@@ -66,7 +66,7 @@ public class Chat
 
     public void CreateRequestChat(string contentId)
     {
-        APIHandler.SendPOST("/invite", new
+        APIHandler.SendApiRequest("/invite", new
         {
             id = APIHandler.HashString(contentId)
         });
@@ -91,7 +91,7 @@ public class Chat
         GroupChat? chat = FindChat(id);
         if (chat is null) return;
 
-        APIHandler.SendPOST("/group/sendMessage", new
+        APIHandler.SendApiRequest("/group/sendMessage", new
         {
             id = chat.Id,
             message
@@ -131,7 +131,7 @@ public class Chat
         GroupChat? chat = FindChat(id);
         if (chat is null) return;
         
-        APIHandler.SendPOST("/group/invite", new
+        APIHandler.SendApiRequest("/group/invite", new
         {
             id = chat.Id,
             to = APIHandler.HashString(contentId)

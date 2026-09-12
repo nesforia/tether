@@ -24,6 +24,9 @@ public sealed class Plugin : IDalamudPlugin
 
     public readonly Chat ChatModule;
     private readonly APIHandler apiHandler;
+
+    private bool firstFetchUser = false;
+    
     public Configuration Configuration { get; init; }
     private ManageChatsWindow ManageChatsWindow { get; init; }
     private ConfigWindow ConfigWindow { get; init; }
@@ -71,9 +74,10 @@ public sealed class Plugin : IDalamudPlugin
     
     private void OnFrameworkUpdate(IFramework framework)
     {
-        if (PlayerState.IsLoaded)
+        if (PlayerState.IsLoaded && !firstFetchUser)
         {
             _ = apiHandler.GenerateUserToken();
+            firstFetchUser = true;
         }
     }
     
@@ -94,7 +98,7 @@ public sealed class Plugin : IDalamudPlugin
             ChatModule.Chats.ToList().ForEach(chat =>
             {
                 ChatModule.RemoveGroup(chat.Id);
-                _ = APIHandler.SendPOST("/group/leave", new { id = chat.Id });
+                _ = APIHandler.SendApiRequest("/group/leave", new { id = chat.Id });
             });
         }
         
@@ -102,6 +106,7 @@ public sealed class Plugin : IDalamudPlugin
         
         PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
         ContextMenu.OnMenuOpened -= ChatModule.DrawContextMenu;
+        Framework.Update -= OnFrameworkUpdate;
         
         ChatModule.Dispose();
         _ = apiHandler.Disconnect();

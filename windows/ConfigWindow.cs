@@ -176,17 +176,6 @@ public class ConfigWindow : Window
             _config.LEGACY_THEME = legacy;
             _config.Save();
         }
-        
-        using (ImRaii.Disabled(_config.LEGACY_THEME))
-        {
-            var compact = _config.COMPACT_CHAT_MODE;
-            if (Checkbox("Compact mode", ref compact,
-                         "Denser message layout — smaller spacing, no bubbles."))
-            {
-                _config.COMPACT_CHAT_MODE = compact;
-                _config.Save();
-            }
-        }
     }
 
     private static bool Checkbox(string label, ref bool value, string tooltip)

@@ -11,3 +11,4 @@ packages/
 *.sln.docstates
 .DS_Store
 Thumbs.db
+config/

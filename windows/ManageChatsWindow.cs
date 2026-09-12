@@ -62,7 +62,6 @@ public class ManageChatsWindow : Window
                                          .Push(ImGuiStyleVar.ChildRounding, 8f);
         }
 
-        DrawHeader();
         ImGui.Dummy(new Vector2(0, 5));
 
         var chats = plugin.ChatModule.Chats;
@@ -83,23 +82,6 @@ public class ManageChatsWindow : Window
         themeColor?.Dispose();
     }
 
-    private static void DrawHeader()
-    {
-        using (ImRaii.PushColor(ImGuiCol.Text, Text))
-        {
-            ImGui.TextUnformatted("Your chats");
-        }
-
-        ImGui.SameLine();
-
-        using (ImRaii.PushColor(ImGuiCol.Text, TextMuted))
-        {
-            ImGui.TextUnformatted("  ·  temporary groups");  
-        }
-        
-        ImGui.Dummy(new Vector2(0, 4));
-    }
-
     private void DrawChatRow(GroupChat chat)
     {
         using var childBg = ImRaii.PushColor(ImGuiCol.ChildBg, Surface2, !plugin.Configuration.LEGACY_THEME);
@@ -107,31 +89,32 @@ public class ManageChatsWindow : Window
         
         using (ImRaii.Child($"##chat_{chat.Id}", new Vector2(0, 58), true))
         {
-            ImGui.SameLine(0, 7);
 
             using (ImRaii.PushColor(ImGuiCol.Text, Text))
             { 
                 ImGui.TextUnformatted(chat.Name);
             }
-
-            ImGui.SameLine();
             
             using (ImRaii.PushColor(ImGuiCol.Text, TextMuted))
             {
-                ImGui.TextUnformatted("temporary");
+                ImGui.TextUnformatted($"{chat.Participants.Count} members of this chat");
             }
 
             var buttonWidth = 54f;
+            var buttonHeight = 32f;
             var spacing = ImGui.GetStyle().ItemSpacing.X;
             var totalButtonWidth = buttonWidth * 2 + spacing;
 
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - totalButtonWidth);
+            var buttonY = (ImGui.GetContentRegionAvail().Y + (buttonHeight / 2f)) / 2f;
+            var buttonX = ImGui.GetContentRegionAvail().X + ImGui.GetCursorPosX() - totalButtonWidth;
+            
+            ImGui.SetCursorPos(new Vector2(buttonX, buttonY));
             
             using (ImRaii.PushColor(ImGuiCol.Button, Accent, !plugin.Configuration.LEGACY_THEME)
                          .Push(ImGuiCol.ButtonHovered, AccentHover, !plugin.Configuration.LEGACY_THEME)
                          .Push(ImGuiCol.ButtonActive, new Vector4(0.32f, 0.52f, 0.88f, 1f), !plugin.Configuration.LEGACY_THEME))
             {
-                if (ImGui.Button("Open", new Vector2(buttonWidth, 32)))
+                if (ImGui.Button("Open", new Vector2(buttonWidth, buttonHeight)))
                 {
                     var window = plugin.ChatModule.FindWindow(chat.Id);
                     if (window is not null)
@@ -146,9 +129,9 @@ public class ManageChatsWindow : Window
                          .Push(ImGuiCol.ButtonActive, new Vector4(0.28f, 0.17f, 0.20f, 1f), !plugin.Configuration.LEGACY_THEME)
                          .Push(ImGuiCol.Text, Red, !plugin.Configuration.LEGACY_THEME))
             {
-                if (ImGui.Button("Leave", new Vector2(buttonWidth, 32)))
+                if (ImGui.Button("Leave", new Vector2(buttonWidth, buttonHeight)))
                 {
-                    _ = APIHandler.SendPOST("/group/leave", new { id = chat.Id });
+                    _ = APIHandler.SendApiRequest("/group/leave", new { id = chat.Id });
                     plugin.ChatModule.RemoveGroup(chat.Id);
                 } 
             }

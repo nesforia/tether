@@ -153,11 +153,11 @@ public class RequestWindow : Window
     {
         if (_groupId is null)
         {
-            _ = APIHandler.SendPOST("/group/create", new { from = _userInviteId });
+            _ = APIHandler.SendApiRequest("/group/create", new { from = _userInviteId });
         }
         else
         {
-            var response = await APIHandler.SendPOST("/group/acceptInvite", new { id = _groupId });
+            var response = await APIHandler.SendApiRequest("/group/acceptInvite", new { id = _groupId });
             var groupParticipants = await response.Content.ReadFromJsonAsync<AcceptGroupRequestPayload>();
             if (groupParticipants is null) return;
             
