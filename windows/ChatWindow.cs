@@ -321,10 +321,7 @@ public class ChatWindow : Window
 
             foreach (var msg in tempMsg)
             {
-                if (msg.Author.id != "0")
-                    DrawMessageLine(msg);
-                else
-                    DrawSystemLine(msg);
+                DrawMessageLine(msg);
             }
 
             if (_scrollToBottom || ImGui.GetScrollY() >= ImGui.GetScrollMaxY() - 5f)
@@ -371,45 +368,6 @@ public class ChatWindow : Window
         {
             ImGui.TextUnformatted(msg.Message);
         }
-    }
-
-    private void DrawSystemLine(ChatMessage msg)
-    {
-        string time = $"{msg.CreatedAt:HH:mm}";
-
-        const float paddingX = 12f;
-        const float paddingY = 8f;
-
-        float bubbleWidth = ImGui.GetContentRegionAvail().X;
-        float textWidth = MathF.Max(1f, bubbleWidth - paddingX * 2f);
-
-        Vector2 messageSize = ImGui.CalcTextSize(msg.Message, false, textWidth);
-
-        float timeHeight = ImGui.GetTextLineHeight();
-        float spacing = ImGui.GetStyle().ItemSpacing.Y;
-
-        float bubbleHeight = paddingY * 2f + timeHeight + spacing + messageSize.Y + 2f;
-        
-        string id = $"##SystemBubble_{msg.CreatedAt.Ticks}";
-        
-        using (ImRaii.PushColor(ImGuiCol.ChildBg, PastelPink))
-        using (ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 12f)
-                     .Push(ImGuiStyleVar.WindowPadding, new Vector2(paddingX, paddingY)))
-        using (ImRaii.Child(id, new Vector2(bubbleWidth, bubbleHeight), true,
-                            ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
-        {
-            using (ImRaii.PushColor(ImGuiCol.Text, Text))
-            {
-                ImGui.TextUnformatted(time); 
-            }
-
-            using (ImRaii.PushColor(ImGuiCol.Text, Text))
-            {
-                ImGui.TextWrapped(msg.Message);  
-            }
-        }
-
-        ImGui.Dummy(new Vector2(0, 6f));
     }
 
     private void DrawInputRow(float width)
